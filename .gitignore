@@ -1,0 +1,10 @@
+*.identcache
+*.local
+*.dsk
+*.lnk
+*.exe
+*.~*
+src/__history/
+src/Debug/
+test/
+test.1/
