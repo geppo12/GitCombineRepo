@@ -47,6 +47,7 @@ type
     function ReadString: string;
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
+    procedure LoadFromFile(AFile: string);
     //* windows readHandle: not valid after ReOpen
     property ReadHandle: THandle read FReadHandle;
     //* windows writeHandle: not valid after ReOpen
@@ -54,6 +55,9 @@ type
   end;
 
 implementation
+
+uses
+  SysUtils;
 
 constructor TPipeStream.Create;
 begin
@@ -124,6 +128,19 @@ begin
   if not WriteFile(FWriteHandle,Buffer,Count,Cardinal(Result),nil) then
     Result := -1;
 end;
+
+procedure TPipeStream.LoadFromFile(AFile: string);
+var
+  LFileStream: TFileStream;
+begin
+  LFileStream := TFileStream.Create(AFile,fmOpenRead);
+  try
+    CopyFrom(LFileStream,LFileStream.Size);
+  finally
+    LFileStream.Free;
+  end;
+end;
+
 
 
 end.

@@ -421,6 +421,7 @@ begin
     // if we have an update sha1 hash we update this
     if LHash <> LNewHash  then begin
       LRefName := FRefList.Values[LHash];
+      SiMain.LogVerbose('Update ref %s new hash %s',[LRefName,LNewHash]);
       executeCommand(Format('git.exe update-ref %s %s',[LRefName,LNewHash]));
     end;
   end;
@@ -430,23 +431,25 @@ end;
 procedure TCRGitInterface.updateIndex(APath: string);
 var
   I: Integer;
-  LFileStream: TStream;
   LPipeStream: TPipeStream;
 begin
-  LFileStream := nil;
   LPipeStream := nil;
   try
     SiMain.LogVerbose('Update path: commit: Path %s',[APath]);
+    // get list of file in the index
     executeCommand('git.exe ls-files -s',kTempName);
     FAuxList.LoadFromFile(kTempName);
     for I := 0 to FAuxList.Count - 1 do
+      // delphi way for <sed "s/\t/\t$(APath)\//">
       FAuxList.Strings[I] := ReplaceStr(FAuxList.Strings[I],#9,#9+APath+'/');
+    // save modified string;
     FAuxList.SaveToFile(kTempName);
 
-    SetEnvironmentVariable('GIT_INDEX_FILE',kNewIndexName);
-    LFileStream := TFileStream.Create(kTempName,fmOpenRead);
+    // load file data into u
     LPipeStream := TPipeStream.Create;
-    LPipeStream.CopyFrom(LFileStream,LFileStream.Size);
+    LPipeStream.LoadFromFile(kTempName);
+
+    SetEnvironmentVariable('GIT_INDEX_FILE',kNewIndexName);
 
     executeCommand('git.exe update-index --index-info',nil,LPipeStream);
     DeleteFile(kIndexName);
@@ -454,7 +457,6 @@ begin
     DeleteFile(kTempName);
   finally
     SetEnvironmentVariable('GIT_INDEX_FILE',kIndexName);
-    LFileStream.Free;
     LPipeStream.Free;
   end;
 end;

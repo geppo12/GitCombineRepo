@@ -266,12 +266,8 @@ begin
     if SysUtils.DirectoryExists(APath) then begin
       SiMain.LogVerbose('Processing repo: ' + APath);
       SetCurrentDir(APath);
-      // #DEBUG
-      SiMain.LogDebug('Dir: %s',[GetCurrentDir]);
       // create project subdirectory
       LRootDir := createProjectDir(APath);
-      // create unix slash
-      //LRootDir := ReplaceStr(LRootDir,'\','/');
       // TRICK: we don't have ending slash, so we consider it as file
       FGit.UpdateCommitTree(ExtractFileName(LRootDir));
     end;
