@@ -585,7 +585,7 @@ begin
     // commit new tree
     LTree := Trim(LOutPipe.ReadString);
     SiMain.LogVerbose('New tree: %s',[LTree]);
-    if LTree <> '' then
+    if LTree <> '' then begin
       // create string of parent of this commmit
       LParentStr := createParentStr(LCommit);
       // commit a tree
@@ -605,6 +605,7 @@ begin
         FreeAndNil(LStrStream);
       end;
       FCommitMapper.Values[LCommit.Commit] := LCommitStr;
+    end;
   end;
   updateRefList;
 end;
