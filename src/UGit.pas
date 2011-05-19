@@ -80,7 +80,6 @@ type
     FCommitMapper: TStringList;
     FCurrentCommit: string;
 
-    procedure createCommitList;
     function executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean; overload; inline;
     function executeCommand(ACmd: string; AFile: string = ''; AOut: TPipeStream =
         nil; AIn: TPipeStream = nil): Boolean; overload;
@@ -88,9 +87,10 @@ type
     procedure setIndexFilename(AName: string);
     function mapCommit(ACommitStr: string): string;
     function createParentStr(ACommit: TCRGitCommit): string;
-    procedure updateIndex(APath: string);
     procedure updateRefList;
 
+    procedure updateIndex(APath: string);
+    procedure createCommitList;
     public
     constructor Create;
     destructor Destroy; override;
@@ -100,8 +100,6 @@ type
     procedure PullRepo(ARepo: string);
     procedure InitRepo;
     procedure UpdateCommitTree(APath: string);
-    // TODO 2 -cFUNCTION : GetCurrentHead
-    //procedure GetCurrentHead;
   end;
 
   EGitError = class(Exception);
