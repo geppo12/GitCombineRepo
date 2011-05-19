@@ -466,7 +466,7 @@ var
   LCommit: TCRGitCommit;
   LCommitHash: string;
 begin
-  executeCommand('git.exe rev-list --reverse --topo-order HEAD',kTempName);
+  executeCommand('git.exe rev-list --reverse --topo-order --all',kTempName);
   FAuxList.LoadFromFile(kTempName);
   FCommitList.Clear;
 
