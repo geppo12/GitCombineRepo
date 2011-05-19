@@ -110,6 +110,7 @@ implementation
 
 uses
   SiAuto,
+  SmartInspect,
   Types,
   StrUtils,
   Registry,
@@ -218,6 +219,8 @@ begin
     else
       FMessage.Add(Lstring);
   end;
+  // we put this at bottom bacouse we need parsed "Commit" string
+  SiMain.LogStringList(lvDebug,Format('Commit data of %s',[Commit]),FAuxList);
 end;
 
 procedure TCRGitCommit.MessageToStream(AStream: TStringStream);
@@ -245,7 +248,7 @@ var
   pi: PROCESS_INFORMATION;
   sa: SECURITY_ATTRIBUTES;
 begin
-
+  SiMain.EnterMethod(self,'executeCommand');
   ACmd := FCmdPath + ACmd;
   {if AIn <> nil then begin
     SiMain.LogDebug('DEBUG STRING: %s',[AIn.ReadString]);
@@ -349,6 +352,7 @@ begin
       if not Result then
         CopyFile(PChar(AFile),kErrorName,false);
     end;
+  SiMain.LeaveMethod(self,'executeCommand');
 end;
 
 procedure TCRGitInterface.fingGitPathFormInno;
@@ -433,6 +437,7 @@ var
   I: Integer;
   LPipeStream: TPipeStream;
 begin
+  SiMain.EnterMethod(self,'updateIndex');
   LPipeStream := nil;
   try
     SiMain.LogVerbose('Update path: commit: Path %s',[APath]);
@@ -444,6 +449,8 @@ begin
       FAuxList.Strings[I] := ReplaceStr(FAuxList.Strings[I],#9,#9+APath+'/');
     // save modified string;
     FAuxList.SaveToFile(kTempName);
+
+    SiMain.LogDebug('Load file into pipe');
 
     // load file data into u
     LPipeStream := TPipeStream.Create;
@@ -458,6 +465,7 @@ begin
   finally
     SetEnvironmentVariable('GIT_INDEX_FILE',kIndexName);
     LPipeStream.Free;
+    SiMain.LeaveMethod(self,'updateIndex');
   end;
 end;
 
@@ -466,6 +474,7 @@ var
   LCommit: TCRGitCommit;
   LCommitHash: string;
 begin
+  SiMain.LogVerbose('Create Commit List');
   executeCommand('git.exe rev-list --reverse --topo-order --all',kTempName);
   FAuxList.LoadFromFile(kTempName);
   FCommitList.Clear;
