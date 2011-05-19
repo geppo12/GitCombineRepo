@@ -34,6 +34,7 @@ uses
 type
   TPipeStream = class(TStream)
     private
+    FInputStream: TStream;
     FReadHandle: THandle;
     FWriteHandle: THandle;
 
@@ -44,6 +45,7 @@ type
     procedure CloseWrite;
     procedure CloseRead;
     procedure Reset;
+    procedure Connect;
     function ReadString: string;
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
@@ -67,6 +69,7 @@ end;
 
 destructor TPipeStream.Destroy;
 begin
+  FreeAndNil(FInputStream);
   CloseRead;
   CloseWrite;
   inherited;
@@ -98,9 +101,16 @@ end;
 
 procedure TPipeStream.Reset;
 begin
+  FreeAndNil(FInputStream);
   CloseRead;
   CloseWrite;
   Open;
+end;
+
+procedure TPipeStream.Connect;
+begin
+  if FInputStream <> nil then
+    CopyFrom(FInputStream,FInputStream.Size);
 end;
 
 function TPipeStream.ReadString: string;
@@ -130,15 +140,8 @@ begin
 end;
 
 procedure TPipeStream.LoadFromFile(AFile: string);
-var
-  LFileStream: TFileStream;
 begin
-  LFileStream := TFileStream.Create(AFile,fmOpenRead);
-  try
-    CopyFrom(LFileStream,LFileStream.Size);
-  finally
-    LFileStream.Free;
-  end;
+  FInputStream := TFileStream.Create(AFile,fmOpenRead);
 end;
 
 

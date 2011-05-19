@@ -312,46 +312,50 @@ begin
 		pi                 // PROCESSINFORMATION
     );
 
-    if not success then begin
-        error := GetLastError;
-        FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER or  FORMAT_MESSAGE_FROM_SYSTEM,
-            nil,
-            error,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-            @PLErrorString,
-      			0,
-            nil
-        );
-        SiMain.LogWarning('CMD: Fail %s',[PLErrorString]);
-        LocalFree(Cardinal(PLErrorString));
-        Result := false;
-    end else begin
-        SiMain.LogDebug('CMD: waiting termination...');
+  if not success then begin
+      error := GetLastError;
+      FormatMessage(
+          FORMAT_MESSAGE_ALLOCATE_BUFFER or  FORMAT_MESSAGE_FROM_SYSTEM,
+          nil,
+          error,
+          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+          @PLErrorString,
+          0,
+          nil
+      );
+      SiMain.LogWarning('CMD: Fail %s',[PLErrorString]);
+      LocalFree(Cardinal(PLErrorString));
+      Result := false;
+  end else begin
+      SiMain.LogDebug('CMD: waiting termination...');
+      if AIn <> nil then begin
+        // if pipe has an input stream we connect to this
+        AIn.Connect;
+
         // closein process close also stdin pipe to give EOF to child process
         // we close non inherited side of pipe
-        if AIn <> nil then
-          AIn.CloseWrite;
-        if AOut <> nil then
-          AOut.CloseWrite;
+        AIn.CloseWrite;
+      end;
+      if AOut <> nil then
+        AOut.CloseWrite;
 
-        WaitForSingleObject(pi.hProcess,INFINITE);
-        GetExitCodeProcess(pi.hProcess,error);
-        if error <> 0 then begin
-            Result := false;
-            SiMain.LogWarning('CMD: Terminated False');
-        end else begin
-            Result := true;
-            SiMain.LogDebug('CMD: Terminated True');
-        end;
-    end;
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    if AFile <> '' then begin
-      CloseHandle(LOutHandle);
-      if not Result then
-        CopyFile(PChar(AFile),kErrorName,false);
-    end;
+      WaitForSingleObject(pi.hProcess,INFINITE);
+      GetExitCodeProcess(pi.hProcess,error);
+      if error <> 0 then begin
+          Result := false;
+          SiMain.LogWarning('CMD: Terminated False');
+      end else begin
+          Result := true;
+          SiMain.LogDebug('CMD: Terminated True');
+      end;
+  end;
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  if AFile <> '' then begin
+    CloseHandle(LOutHandle);
+    if not Result then
+      CopyFile(PChar(AFile),kErrorName,false);
+  end;
   SiMain.LeaveMethod(self,'executeCommand');
 end;
 
