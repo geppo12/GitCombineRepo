@@ -214,6 +214,7 @@ var
 begin
   // TRICK: strip ending backslash so we can consider it aa file name
   AString := ExcludeTrailingBackslash(AString);
+  LId := 0;
   repeat
     Result := IncludeTrailingBackslash(AString) +  ExtractFileName(AString);
     if LId > 0 then
