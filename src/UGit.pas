@@ -435,7 +435,7 @@ var
   procedure splitString(AString: string; var AHash,ARefName: string);
   var
     LPos: Integer;
-  begin
+begin
     LPos := Pos(' ',AString);
     AHash := LeftStr(AString,LPos-1);
     ARefName := RightStr(AString,Length(AString)-LPos);
@@ -476,14 +476,13 @@ begin
       // delphi way for <sed "s/\t/\t$(APath)\//">
       FAuxList.Strings[I] := ReplaceStr(FAuxList.Strings[I],#9,#9+APath+'/');
     // save modified string;
-
-    // TODO 2 -cFIXME : load directly into TPipeStream (per una prova iniziare con TStringStream)
-    FAuxList.SaveToFile(kTempName);
+    //FAuxList.SaveToFile(kTempName);
     SiMain.LogDebug('Load file into pipe');
 
     // load file data into u
     LPipeStream := TPipeStream.Create;
-    LPipeStream.LoadFromFile(kTempName);
+    //LPipeStream.LoadFromFile(kTempName);
+    LPipeStream.LoadFromStrings(FAuxList);
 
     SetEnvironmentVariable('GIT_INDEX_FILE',kNewIndexName);
 

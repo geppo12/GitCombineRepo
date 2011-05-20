@@ -50,6 +50,7 @@ type
     function Read(var Buffer; Count: Longint): Longint; override;
     function Write(const Buffer; Count: Longint): Longint; override;
     procedure LoadFromFile(AFile: string);
+    procedure LoadFromStrings(AStrings: TStrings);
     //* windows readHandle: not valid after ReOpen
     property ReadHandle: THandle read FReadHandle;
     //* windows writeHandle: not valid after ReOpen
@@ -143,6 +144,17 @@ procedure TPipeStream.LoadFromFile(AFile: string);
 begin
   FInputStream := TFileStream.Create(AFile,fmOpenRead);
 end;
+
+procedure TPipeStream.LoadFromStrings(AStrings: TStrings);
+var
+  LStr: string;
+begin
+  FInputStream := TStringStream.Create;
+  for LStr in AStrings do
+    TStringStream(FInputStream).WriteString(LStr+#10);
+  FInputStream.Seek(0,soBeginning);
+end;
+
 
 
 
