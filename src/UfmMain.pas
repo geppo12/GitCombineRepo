@@ -255,7 +255,7 @@ begin
     Close;
   end;
 {$IFDEF _DEBUGPATH}
-  lbSourceRepo.AddItem('D:\DATI\ProgettiRcs\_interni_\GitCombineRepo\test\',nil);
+  lbSourceRepo.AddItem('D:\DATI\ProgettiRcs\_interni_\GitCombineRepo\TortoiseGit\',nil);
   eDestRepo.Text := 'c:\tmp---';
 {$ENDIF}
 end;

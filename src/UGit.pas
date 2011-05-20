@@ -578,7 +578,10 @@ end;
 
 procedure TCRGitInterface.PullRepo(ARepo: string);
 begin
+  // we pull all object from remote repo
   executeCommand(Format('git.exe pull  "%s"',[ARepo]));
+  // now we fetch also tags objects
+  executeCommand(Format('git.exe fetch --tags  "%s"',[ARepo]));
 end;
 
 procedure TCRGitInterface.InitRepo;
