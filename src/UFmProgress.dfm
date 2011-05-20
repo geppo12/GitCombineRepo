@@ -1,10 +1,11 @@
 object fmProgress: TfmProgress
   Left = 0
   Top = 0
+  BorderIcons = [biMinimize, biMaximize]
   BorderStyle = bsDialog
   Caption = 'Progress'
-  ClientHeight = 106
-  ClientWidth = 418
+  ClientHeight = 51
+  ClientWidth = 351
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,34 +13,22 @@ object fmProgress: TfmProgress
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  Position = poMainFormCenter
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
-  object lblRepo: TLabel
+  object lblCount: TLabel
     Left = 8
-    Top = 5
-    Width = 35
+    Top = 8
+    Width = 39
     Height = 13
-    Caption = 'lblRepo'
+    Caption = 'lblCount'
   end
-  object lblFiles: TLabel
+  object pbProgress: TProgressBar
     Left = 8
-    Top = 53
-    Width = 31
-    Height = 13
-    Caption = 'lblFiles'
-  end
-  object pbRepo: TProgressBar
-    Left = 8
-    Top = 24
-    Width = 393
+    Top = 27
+    Width = 333
     Height = 16
     TabOrder = 0
-  end
-  object pbFiles: TProgressBar
-    Left = 8
-    Top = 72
-    Width = 393
-    Height = 16
-    TabOrder = 1
   end
 end

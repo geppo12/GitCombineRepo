@@ -33,6 +33,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, FileCtrl,
   UFileVersion,
+  UFmProgress,
   UGit;
 
 type
@@ -53,6 +54,8 @@ type
     procedure btnSelectClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
+    { Private declarations }
+    FProgressForm: TfmProgress;
     FGit: TCRGitInterface;
     FAuxStringList: TStringList;
     FCreateErrorMsg: string;
@@ -64,7 +67,7 @@ type
     function createProjectDir(AString: string): string;
     function createSubDir(ARoot,APath: string): string;
     procedure processRepo(APath: string);
-    { Private declarations }
+    procedure progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
   public
     { Public declarations }
   end;
@@ -101,6 +104,7 @@ begin
   siInit;
   try
     FGit := TCRGitInterface.Create;
+    FGit.OnProgress := progressProcess;
     FAuxStringList := TStringList.Create;
     Caption := Application.Title;
     Caption := Caption + ' ' + VersionInformation;
@@ -116,6 +120,8 @@ var
   LRepo: string;
 begin
   btnGo.Enabled := false;
+  FProgressForm := TfmProgress.Create(self);
+  FProgressForm.Show;
   if SysUtils.DirectoryExists(eDestRepo.Text) then begin
     lbLog.Clear;
     for LRepo in lbSourceRepo.Items do
@@ -126,6 +132,7 @@ begin
     for LRepo in lbSourceRepo.Items do
       FGit.PullRepo(LRepo); }
   end;
+  FreeAndNil(FProgressForm);
   btnGo.Enabled := true;
 end;
 
@@ -276,6 +283,16 @@ begin
     on EGitError do
       SiMain.LogException;
   end;
+end;
+
+procedure TfmMain.progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
+begin
+  Application.ProcessMessages;
+  if FProgressForm <> nil then
+    case AStep of
+      kCount: FProgressForm.Max(APosition);
+      kPosition: FProgressForm.Progress(APosition);
+    end;
 end;
 
 end.

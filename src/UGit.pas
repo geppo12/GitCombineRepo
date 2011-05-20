@@ -69,8 +69,16 @@ type
     property ParentsCount: Integer read FParentsCount;
   end;
 
+  TCRGitProgressStep = (
+    kCount,
+    kPosition
+  );
+
+  TCRGitProgress = procedure(AStep: TCRGitProgressStep; APosition: Integer) of object;
+
   TCRGitInterface = class
     private
+    FOnProgress: TCRGitProgress;
     FIndexFilename: string;
     FCmdPath: string;
     FAuxList: TStringList;
@@ -80,6 +88,7 @@ type
     FCommitMapper: TStringList;
     FCurrentCommit: string;
 
+    procedure progressIndication(AStep: TCRGitProgressStep; APosition: Integer); inline;
     function executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean; overload; inline;
     function executeCommand(ACmd: string; AFile: string = ''; AOut: TPipeStream =
         nil; AIn: TPipeStream = nil): Boolean; overload;
@@ -88,9 +97,9 @@ type
     function mapCommit(ACommitStr: string): string;
     function createParentStr(ACommit: TCRGitCommit): string;
     procedure updateRefList;
-
     procedure updateIndex(APath: string);
     procedure createCommitList;
+
     public
     constructor Create;
     destructor Destroy; override;
@@ -100,6 +109,7 @@ type
     procedure PullRepo(ARepo: string);
     procedure InitRepo;
     procedure UpdateCommitTree(APath: string);
+    property OnProgress: TCRGitProgress read FOnProgress write FOnProgress;
   end;
 
   EGitError = class(Exception);
@@ -227,6 +237,13 @@ var
 begin
   for LStr in FMessage do
       AStream.WriteString(LStr+#10);
+end;
+
+procedure TCRGitInterface.progressIndication(AStep: TCRGitProgressStep;
+    APosition: Integer);
+begin
+  if Assigned(FOnProgress) then
+    FOnProgress(AStep,APosition);
 end;
 
 function TCRGitInterface.executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean;
@@ -475,17 +492,22 @@ procedure TCRGitInterface.createCommitList;
 var
   LCommit: TCRGitCommit;
   LCommitHash: string;
+  LCount: Integer;
 begin
   SiMain.LogVerbose('Create Commit List');
   executeCommand('git.exe rev-list --reverse --topo-order --all',kTempName);
   FAuxList.LoadFromFile(kTempName);
   FCommitList.Clear;
 
-  for LCommitHash in FAuxList do begin
+  progressIndication(kCount,FAuxList.Count);
+
+  for LCount := 0 to FAuxList.Count - 1 do begin
+    LCommitHash := FAuxList.Strings[LCount];
     LCommit := TCRGitCommit.Create(LCommitHash);
     executeCommand(Format('git.exe cat-file commit %s',[LCommitHash]),kTempName + '.commit');
     LCommit.Parse(kTempName + '.commit');
     FCommitList.Add(LCommit);
+    progressIndication(kPosition,LCount+1);
   end;
   DeleteFile(PChar(kTempName + '.commit'));
 end;
@@ -571,6 +593,8 @@ begin
   Clear;
   // create main commit list
   createCommitList;
+  progressIndication(kCount,FCommitList.Count);
+
   LInPipe := nil;
   LOutPipe := TPipeStream.Create;
   for I := 0 to FCommitList.Count - 1 do begin
@@ -606,6 +630,7 @@ begin
       end;
       FCommitMapper.Values[LCommit.Commit] := LCommitStr;
     end;
+    progressIndication(kPosition,I+1);
   end;
   updateRefList;
 end;

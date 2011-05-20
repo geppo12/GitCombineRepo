@@ -5,7 +5,8 @@ uses
   UFmMain in 'UFmMain.pas' {fmMain},
   UFileVersion in 'UFileVersion.pas',
   UGit in 'UGit.pas',
-  UPipeStream in 'UPipeStream.pas';
+  UPipeStream in 'UPipeStream.pas',
+  UFmProgress in 'UFmProgress.pas' {fmProgress};
 
 {$R *.res}
 

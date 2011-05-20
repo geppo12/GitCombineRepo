@@ -8,20 +8,17 @@ uses
 
 type
   TfmProgress = class(TForm)
-    pbRepo: TProgressBar;
-    pbFiles: TProgressBar;
-    lblRepo: TLabel;
-    lblFiles: TLabel;
+    pbProgress: TProgressBar;
+    lblCount: TLabel;
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
-    procedure setNumRepo(ANum: Integer);
-    function getNumRepo: Integer;
-    procedure setNumFiles(ANum: Integer);
-    function getNumFiles: Integer;
+    FMax: Integer;
+
   public
     { Public declarations }
-    property NumRepo: Integer read getNumRepo write setNumRepo;
-    property NumFiles: Integer read getNumFiles write setNumFiles;
+    procedure Max(AMax: Integer);
+    procedure Progress(APosition: Integer);
   end;
 
 var
@@ -31,24 +28,22 @@ implementation
 
 {$R *.dfm}
 
-procedure TfmProgress.setNumRepo(ANum: Integer);
+procedure TfmProgress.FormShow(Sender: TObject);
 begin
-  pbRepo.Max := ANum;
+  pbProgress.Position := 0;
+  pbProgress.Min := 0;
 end;
 
-function TfmProgress.getNumRepo: Integer;
+procedure TfmProgress.Max(AMax: Integer);
 begin
-  Result := pbRepo.Max;
+  pbProgress.Max := AMax;
+  FMax := AMax;
 end;
 
-procedure TfmProgress.setNumFiles(ANum: Integer);
+procedure TfmProgress.Progress(APosition: Integer);
 begin
-  pbFiles.Max := ANum;
-end;
-
-function TfmProgress.getNumFiles: Integer;
-begin
-  Result := pbFiles.Max;
+  pbProgress.Position := APosition;
+  lblCount.Caption := Format('Processing %d / %d',[APosition,FMax]);
 end;
 
 end.
