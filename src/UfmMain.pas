@@ -126,11 +126,10 @@ begin
     lbLog.Clear;
     for LRepo in lbSourceRepo.Items do
       processRepo(LRepo);
-    { TODO 1 -cFIXME : restore merge of precessed repos
     SetCurrentDir(eDestRepo.Text);
     FGit.InitRepo;
     for LRepo in lbSourceRepo.Items do
-      FGit.PullRepo(LRepo); }
+      FGit.PullRepo(LRepo);
   end;
   FreeAndNil(FProgressForm);
   btnGo.Enabled := true;
@@ -228,8 +227,6 @@ begin
       Result := Result + IntToStr(LId);
     Inc(LId);
   until not SysUtils.DirectoryExists(Result);
-  // create dir with DOS slash
-  CreateDir(Result);
 end;
 
 function TfmMain.createSubDir(ARoot,APath: string): string;

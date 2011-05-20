@@ -430,20 +430,29 @@ var
   LHash: string;
   LNewHash: string;
   LRefName: string;
+  LArray: TStringDynArray;
+
+  procedure splitString(AString: string; var AHash,ARefName: string);
+  var
+    LPos: Integer;
+  begin
+    LPos := Pos(' ',AString);
+    AHash := LeftStr(AString,LPos-1);
+    ARefName := RightStr(AString,Length(AString)-LPos);
+  end;
 begin
   // create reference list
   FRefList.Clear;
   executeCommand('git.exe show-ref',kTempName);
-  FRefList.NameValueSeparator := ' ';
   FRefList.LoadFromFile(kTempName);
 
   // update reference if a commit hash is different
   for I := 0 to FRefList.Count - 1 do begin
-    LHash := FRefList.Names[I];
+    splitString(FRefList.Strings[I],LHash,LRefName);
     LNewHash := mapCommit(LHash);
     // if we have an update sha1 hash we update this
     if LHash <> LNewHash  then begin
-      LRefName := FRefList.Values[LHash];
+      // LArray[1] is reference name
       SiMain.LogVerbose('Update ref %s new hash %s',[LRefName,LNewHash]);
       executeCommand(Format('git.exe update-ref %s %s',[LRefName,LNewHash]));
     end;
@@ -467,8 +476,9 @@ begin
       // delphi way for <sed "s/\t/\t$(APath)\//">
       FAuxList.Strings[I] := ReplaceStr(FAuxList.Strings[I],#9,#9+APath+'/');
     // save modified string;
-    FAuxList.SaveToFile(kTempName);
 
+    // TODO 2 -cFIXME : load directly into TPipeStream (per una prova iniziare con TStringStream)
+    FAuxList.SaveToFile(kTempName);
     SiMain.LogDebug('Load file into pipe');
 
     // load file data into u
