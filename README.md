@@ -1,7 +1,9 @@
 CombineRepo
 ===========
 
-CombineRepo is a graphical tool to merge more git repositoies
+CombineRepo is a graphical tool to merge more git repositoies. Actually is stil in alpha test. Unfortunatelly cannot process correctly
+repository with more than one open branch.... I' working to improve preformances and solve this problem.
+Software is tested with msysgit 1.7.3.1
 
 To compile both software you need Delphi XE professional and [SmartInspect](www.smartinspect.com)
 

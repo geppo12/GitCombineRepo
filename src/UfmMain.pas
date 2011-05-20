@@ -25,7 +25,7 @@
 unit UFmMain;
 
 // ..put some test path inside the program
-{$DEFINE _DEBUGPATH}
+{.$DEFINE _DEBUGPATH}
 
 interface
 
