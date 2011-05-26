@@ -127,9 +127,10 @@ begin
     for LRepo in lbSourceRepo.Items do
       processRepo(LRepo);
     SetCurrentDir(eDestRepo.Text);
-    FGit.InitRepo;
+    FGit.InitMerge;
     for LRepo in lbSourceRepo.Items do
-      FGit.PullRepo(LRepo);
+      FGit.MergeRepo(LRepo);
+    FGit.FinalizeMerge;
   end;
   FreeAndNil(FProgressForm);
   btnGo.Enabled := true;
@@ -255,7 +256,7 @@ begin
     Close;
   end;
 {$IFDEF _DEBUGPATH}
-  lbSourceRepo.AddItem('D:\DATI\ProgettiRcs\_interni_\GitCombineRepo\test\',nil);
+  lbSourceRepo.AddItem('D:\DATI\ProgettiRcs\_interni_\GitCombineRepo\test.2\',nil);
   //lbSourceRepo.AddItem('D:\DATI\ProgettiRcs\_interni_\GitCombineRepo\TortoiseGit\',nil);
   eDestRepo.Text := 'c:\tmp---';
 {$ENDIF}

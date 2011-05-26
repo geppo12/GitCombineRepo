@@ -97,6 +97,7 @@ type
     function mapCommit(ACommitStr: string): string;
     function createParentStr(ACommit: TCRGitCommit): string;
     procedure updateRefList;
+    function refToHead(ARef: string): string;
     procedure updateIndex(APath: string);
     procedure createCommitList;
 
@@ -106,8 +107,9 @@ type
     procedure Clear;
     procedure List(AList: TStringList);
     procedure Commit(AMessage: string);
-    procedure PullRepo(ARepo: string);
-    procedure InitRepo;
+    procedure MergeRepo(ARepo: string);
+    procedure InitMerge;
+    procedure FinalizeMerge;
     procedure UpdateCommitTree(APath: string);
     property OnProgress: TCRGitProgress read FOnProgress write FOnProgress;
   end;
@@ -130,7 +132,8 @@ const
   kErrorName  = '.git/gitError.txt';
   kIndexName = '.git/index';
   kNewIndexName = '.git/index.new';
-  kMsgDir = '.git/rewrite-message';
+  // kMsgDir = '.git/rewrite-message';
+  kFileConfig = '.git/config';
 
   // we read install location of Git form uninstall keys of InnoSetup
   kInnoKey =  'Software\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1';
@@ -263,6 +266,8 @@ var
   pi: PROCESS_INFORMATION;
   sa: SECURITY_ATTRIBUTES;
 begin
+  // command do not ammit path in dos form
+  ACmd := ReplaceStr(ACmd,'\','/');
   SiMain.EnterMethod(self,'executeCommand');
   ACmd := FCmdPath + ACmd;
   {if AIn <> nil then begin
@@ -460,6 +465,17 @@ begin
   DeleteFile(kTempName);
 end;
 
+function TCRGitInterface.refToHead(ARef: string): string;
+var
+  LArray: TStringDynArray;
+begin
+  Result := '';
+  LArray := SplitString(ARef,'/');
+  if Length(LArray) >= 2 then
+    if LArray[Length(LArray)-2] = 'heads' then
+      Result := LArray[Length(LArray)-1];
+end;
+
 procedure TCRGitInterface.updateIndex(APath: string);
 var
   I: Integer;
@@ -575,17 +591,43 @@ begin
   executeCommand(Format('git.exe commit -m "%s"',[AMessage]));
 end;
 
-procedure TCRGitInterface.PullRepo(ARepo: string);
+procedure TCRGitInterface.MergeRepo(ARepo: string);
+var
+  LHead: string;
+  LRef: string;
+  LRefList: TStringDynArray;
 begin
-  // we pull all object from remote repo
-  executeCommand(Format('git.exe pull %s',[ARepo]));
+  executeCommand(Format('git.exe remote add origin %s',[ARepo]));
+  // we pull master branch
+  executeCommand('git.exe pull origin master');
+
+  // we get other branches
+  executeCommand('git.exe fetch origin');
   // now we fetch also tags objects
-  executeCommand(Format('git.exe fetch --tags %s',[ARepo]));
+  executeCommand('git.exe fetch --tags origin');
+
+  // create local branch that track remotes one
+  // we skip master that already exists
+  for LRef in FRefList do begin
+    LHead := refToHead(LRef);
+    if (LHead <> '') and (LHead <> 'master') then
+      executeCommand(Format('git.exe branch %s origin/%s',[LHead,LHead]));
+  end;
+
+  // remove origin
+  executeCommand('git.exe remote rm origin');
 end;
 
-procedure TCRGitInterface.InitRepo;
+procedure TCRGitInterface.InitMerge;
 begin
   executeCommand('git.exe init');
+  CopyFile(PChar(kFileConfig),PChar(kFileConfig+'.backup'),false);
+end;
+
+procedure TCRGitInterface.FinalizeMerge;
+begin
+  CopyFile(PChar(kFileConfig+'.backup'),PChar(kFileConfig),false);
+  DeleteFile(PChar(kFileConfig+'.backup'));
 end;
 
 procedure TCRGitInterface.UpdateCommitTree(APath: string);
