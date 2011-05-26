@@ -33,6 +33,14 @@ uses
   UPipeStream;
 
 type
+  TCRGitCommitInfo = record
+    public
+    Name: string;
+    EMail: string;
+    Time: string;
+    procedure Parse(AString: string);
+  end;
+
   TCRGitCommit = class
     private
     class var
@@ -44,8 +52,8 @@ type
     // only few string
     FParents: array of string;
     FParentsCount: Integer;
-    FAuthor: string;
-    FCommitter: string;
+    FAuthor: TCRGitCommitInfo;
+    FCommitter: TCRGitCommitInfo;
     FMessage: TStringList;
 
     procedure addParent(AParent: string);
@@ -67,6 +75,8 @@ type
     property Tree: string read FTree;
     property Parents[AIndex: Integer]: string read getParents;
     property ParentsCount: Integer read FParentsCount;
+    property Committer: TCRGitCommitInfo read FCommitter;
+    property Author: TCRGitCommitInfo read FAuthor;
   end;
 
   TCRGitProgressStep = (
@@ -92,7 +102,9 @@ type
     function executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean; overload; inline;
     function executeCommand(ACmd: string; AFile: string = ''; AOut: TPipeStream =
         nil; AIn: TPipeStream = nil): Boolean; overload;
-    procedure fingGitPathFormInno;
+    procedure updateUserEnvVars(AId: string; var AReference: TCRGitCommitInfo;
+        ANew: TCRGitCommitInfo);
+    procedure findGitPathFormInno;
     procedure setIndexFilename(AName: string);
     function mapCommit(ACommitStr: string): string;
     function createParentStr(ACommit: TCRGitCommit): string;
@@ -139,6 +151,21 @@ const
   kInnoKey =  'Software\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1';
   kInnoValue = 'InstallLocation';
 
+
+{$REGION 'TCRGitCommitInfo'}
+procedure TCRGitCommitInfo.Parse(AString: string);
+var
+  LPos: Integer;
+begin
+  LPos := Pos('<',AString);
+  Name := Trim(LeftStr(AString,LPos-1));
+  AString := RightStr(AString,Length(AString)-LPos);
+  LPos := Pos('>',AString);
+  EMail := Trim(LeftStr(AString,LPos-1));
+  Time := Trim(RightStr(AString,Length(AString)-LPos));
+end;
+
+{$ENDREGION}
 procedure TCRGitCommit.addParent(AParent: String);
 begin
   Inc(FParentsCount);
@@ -162,9 +189,9 @@ begin
   else if LKey = 'parent' then
     addParent(LValue)
   else if LKey = 'author' then
-    FAuthor := LValue
+    FAuthor.Parse(LValue)
   else if LKey = 'committer' then
-    FCommitter := LValue;
+    FCommitter.Parse(LValue);
 end;
 
 function TCRGitCommit.getParents(AIndex: Integer): string;
@@ -270,10 +297,6 @@ begin
   ACmd := ReplaceStr(ACmd,'\','/');
   SiMain.EnterMethod(self,'executeCommand');
   ACmd := FCmdPath + ACmd;
-  {if AIn <> nil then begin
-    SiMain.LogDebug('DEBUG STRING: %s',[AIn.ReadString]);
-    Exit(false);
-  end;}
 
   LOutHandle := 0;
   SiMain.LogDebug('CMD: execute cmd <' + ACmd + '>');
@@ -379,7 +402,25 @@ begin
   SiMain.LeaveMethod(self,'executeCommand');
 end;
 
-procedure TCRGitInterface.fingGitPathFormInno;
+procedure TCRGitInterface.updateUserEnvVars(AId: string; var AReference: TCRGitCommitInfo; ANew: TCRGitCommitInfo);
+begin
+  if AReference.Name <> ANew.Name then begin
+    AReference.Name := ANew.Name;
+    SetEnvironmentVariable(PChar('GIT_'+AId+'_NAME'),PChar(AReference.Name));
+  end;
+
+  if AReference.EMail <> ANew.EMail then begin
+    AReference.EMail := ANew.EMail;
+    SetEnvironmentVariable(PChar('GIT_'+AId+'_EMAIL'),PChar(AReference.EMail));
+  end;
+
+  if AReference.Time <> ANew.Time then begin
+    AReference.Time := ANew.Time;
+    SetEnvironmentVariable(PChar('GIT_'+AId+'_DATE'),PChar(AReference.Time));
+  end;
+end;
+
+procedure TCRGitInterface.findGitPathFormInno;
 var
   LRegistry: TRegistry;
   LKeyValue: string;
@@ -540,7 +581,7 @@ end;
 constructor TCRGitInterface.Create;
 begin
   // find git path from uninstall key of InnoSetup
-  fingGitPathFormInno;
+  findGitPathFormInno;
   FAuxList    := TStringList.Create;
   // unix domain so we forget #13 #10 (Aka CR LF)
   FAuxList.LineBreak := #10;
@@ -642,6 +683,8 @@ var
   LOutPipe: TPipeStream;
   LInPipe: TPipeStream;
   LStrStream: TStringStream;
+  LCommitterInfo: TCRGitCommitInfo;
+  LAuthorInfo: TCRGitCommitInfo;
 begin
   // clear last result (this is mainform entrypoint)
   Clear;
@@ -675,6 +718,9 @@ begin
         LStrStream.Seek(0,soBeginning);
         LInPipe.CopyFrom(LStrStream,LStrStream.Size);
         LOutPipe.Reset;
+        updateUserEnvVars('COMMITTER',LCommitterInfo,LCommit.Committer);
+        updateUserEnvVars('AUTHOR',LAuthorInfo,LCommit.Author);
+
         executeCommand(Format('git.exe commit-tree %s %s',[LTree,LParentStr]),LOutPipe,LInPipe);
         LCommitStr := Trim(LOutPipe.ReadString);
         SiMain.LogVerbose('New commit: %s->%s',[LCommit.Commit,LCommitStr]);
