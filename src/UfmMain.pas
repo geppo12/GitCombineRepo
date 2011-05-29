@@ -52,6 +52,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure btnGoClick(Sender: TObject);
     procedure btnSelectClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
   private
     { Private declarations }
@@ -80,7 +81,7 @@ implementation
 uses
   Types,
   StrUtils,
-  SiAuto;
+  SiAuto, UAbout;
 
 {$R *.dfm}
 
@@ -247,6 +248,14 @@ begin
     SetCurrentDir(ARoot);
   end;
   Result := LDir;
+end;
+
+procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  LForm: TForm;
+begin
+  LForm := TfmAbout.Create(Self);
+  LForm.ShowModal;
 end;
 
 procedure TfmMain.FormShow(Sender: TObject);

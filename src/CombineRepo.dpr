@@ -6,7 +6,8 @@ uses
   UFileVersion in 'UFileVersion.pas',
   UGit in 'UGit.pas',
   UPipeStream in 'UPipeStream.pas',
-  UFmProgress in 'UFmProgress.pas' {fmProgress};
+  UFmProgress in 'UFmProgress.pas' {fmProgress},
+  UAbout in 'UAbout.pas' {fmAbout};
 
 {$R *.res}
 
