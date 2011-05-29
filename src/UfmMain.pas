@@ -25,7 +25,7 @@
 unit UFmMain;
 
 // ..put some test path inside the program
-{.$DEFINE _DEBUGPATH}
+{$DEFINE _DEBUGPATH}
 
 interface
 
@@ -63,11 +63,14 @@ type
     FLastSelectDir: string;
 
     procedure siInit;
+    procedure copyFileAndDir(AFrom, ATo: string);
+    procedure deleteFileAndDir(AName:  string);
+    procedure copyOrDeleteDir(AFrom, ATo: string; ADelete: Boolean);
     function extractSubPath(AString: string): string;
     function pathToName(AString: string): string;
     function createProjectDir(AString: string): string;
-    function createSubDir(ARoot,APath: string): string;
     procedure processRepo(APath: string);
+    procedure mergeRepo(APath: string);
     procedure progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
   public
     { Public declarations }
@@ -80,15 +83,21 @@ implementation
 
 uses
   Types,
+  ShellApi,
   StrUtils,
   SiAuto, UAbout;
+
+const
+  kGitDir = '.git';
+  kBackupDir = '__bakup_git';
+
 
 {$R *.dfm}
 
 procedure TfmMain.btnAddClick(Sender: TObject);
 begin
   if SelectDirectory('Add Repository','',FLastSelectDir,[sdNewUI,sdNewFolder]) then
-    if SysUtils.DirectoryExists(FLastSelectDir + '/.git') then
+    if SysUtils.DirectoryExists(FLastSelectDir + '/'+ kGitDir) then
       lbSourcerepo.Items.Add(FLastSelectDir)
     else
       ShowMessage('Add a git repository');
@@ -120,21 +129,22 @@ procedure TfmMain.btnGoClick(Sender: TObject);
 var
   LRepo: string;
 begin
-  btnGo.Enabled := false;
-  FProgressForm := TfmProgress.Create(self);
-  FProgressForm.Show;
   if SysUtils.DirectoryExists(eDestRepo.Text) then begin
+    btnGo.Enabled := false;
+    FProgressForm := TfmProgress.Create(self);
+    FProgressForm.Show;
     lbLog.Clear;
     for LRepo in lbSourceRepo.Items do
       processRepo(LRepo);
     SetCurrentDir(eDestRepo.Text);
     FGit.InitMerge;
     for LRepo in lbSourceRepo.Items do
-      FGit.MergeRepo(LRepo);
+      mergeRepo(LRepo);
     FGit.FinalizeMerge;
+    MoveFile(kBackupdir,kGitDir);
+    FreeAndNil(FProgressForm);
+    btnGo.Enabled := true;
   end;
-  FreeAndNil(FProgressForm);
-  btnGo.Enabled := true;
 end;
 
 procedure TfmMain.btnSelectClick(Sender: TObject);
@@ -189,6 +199,57 @@ begin
 {$ENDIF}
 end;
 
+procedure TfmMain.copyFileAndDir(AFrom, ATo: string);
+begin
+  if FileGetAttr(AFrom, false) and faDirectory <> 0 then begin
+    if not DirectoryExists(ATo) then begin
+      SiMain.LogDebug('CreateDir: %s',[ATo]);
+      CreateDir(ATo);
+    end;
+    copyOrDeleteDir(AFrom,ATo,false);
+  end else
+    if not CopyFile(PChar(AFrom),PChar(ATo),false) then
+      SiMain.LogWarning('Fail copy %s->%s',[AFrom,ATo])
+    else
+      SiMain.LogDebug('Copied file %s->%s',[AFrom,ATo])
+end;
+
+procedure TfmMain.deleteFileAndDir(AName:  string);
+var
+  LAttr: Integer;
+begin
+  LAttr := FileGetAttr(AName, false);
+  if LAttr and faDirectory <> 0 then begin
+    copyOrDeleteDir(AName,'',true);
+    RemoveDir(AName);
+  end else begin
+    if (LAttr and faReadOnly) <> 0 then begin
+      LAttr := LAttr xor faReadOnly;
+      FileSetAttr(AName,LAttr);
+    end;
+    if not DeleteFile(AName) then
+      SiMain.LogWarning('Fail delete %s',[AName]);
+  end;
+end;
+
+procedure TfmMain.copyOrDeleteDir(AFrom, ATo: string; ADelete: Boolean);
+var
+  LSearchRec: TSearchRec;
+begin
+  if FindFirst(AFrom+'\*.*', faAnyFile, LSearchRec) = 0 then
+  begin
+    repeat
+      if (LSearchRec.Name <> '.') and (LSearchRec.Name <> '..') then
+        // recursive call to copyFileAndDir
+        if ADelete then
+          deleteFileAndDir(AFrom+'\'+LSearchRec.Name)
+        else
+          copyFileAndDir(AFrom+'\'+LSearchRec.Name,ATo+'\'+LSearchRec.Name);
+    until FindNext(LSearchRec) <> 0;
+    FindClose(LSearchRec);
+  end;
+end;
+
 function TfmMain.extractSubPath(AString: string): string;
 var
   LArray: TStringDynArray;
@@ -231,25 +292,6 @@ begin
   until not SysUtils.DirectoryExists(Result);
 end;
 
-function TfmMain.createSubDir(ARoot,APath: string): string;
-var
-  LArray: TStringDynArray;
-  LDir,
-  LStr: string;
-begin
-  LDir := ARoot;
-  if APath <> '' then begin
-    LArray := SplitString(APath,'/');
-    for LStr in LArray do begin
-      LDir := LDir + '/' + LStr;
-      CreateDir(LDir);
-      SetCurrentDir(LDir);
-    end;
-    SetCurrentDir(ARoot);
-  end;
-  Result := LDir;
-end;
-
 procedure TfmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 var
   LForm: TForm;
@@ -273,16 +315,16 @@ end;
 
 procedure TfmMain.processRepo(APath: string);
 var
-  cmd: string;
+{  cmd: string;
   LFile: string;
-  LDir: string;
+  LDir: string; #OC}
   LRootDir: string;
 begin
   try
     if SysUtils.DirectoryExists(APath) then begin
       SiMain.LogVerbose('Processing repo: ' + APath);
       SetCurrentDir(APath);
-      // create project subdirectory
+      copyFileAndDir(kGitDir,kBackupDir);
       LRootDir := createProjectDir(APath);
       // TRICK: we don't have ending slash, so we consider it as file
       FGit.UpdateCommitTree(ExtractFileName(LRootDir));
@@ -291,6 +333,14 @@ begin
     on EGitError do
       SiMain.LogException;
   end;
+end;
+
+procedure TfmMain.mergeRepo(APath: string);
+begin
+  APath := ExcludeTrailingBackslash(APath);
+  FGit.MergeRepo(APath);
+  deleteFileAndDir(APath+'\'+kGitDir);
+  MoveFile(PChar(APath+'\'+kBackupDir),PChar(APath+'\'+kGitDir));
 end;
 
 procedure TfmMain.progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
