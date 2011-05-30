@@ -1,0 +1,9 @@
+v1.1
+NEW auto backup of .git directory
+
+v1.0.1
+NEW about box
+NEW Safety query
+
+v1.0
+NEW First public release

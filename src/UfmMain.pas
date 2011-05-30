@@ -25,7 +25,7 @@
 unit UFmMain;
 
 // ..put some test path inside the program
-{$DEFINE _DEBUGPATH}
+{.$DEFINE _DEBUGPATH}
 
 interface
 
@@ -71,7 +71,7 @@ type
     function createProjectDir(AString: string): string;
     procedure processRepo(APath: string);
     procedure mergeRepo(APath: string);
-    procedure progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
+    procedure progressProcess(AStep: TCRGitProgressStep; APosition: Integer; AText: string = '');
   public
     { Public declarations }
   end;
@@ -324,6 +324,8 @@ begin
     if SysUtils.DirectoryExists(APath) then begin
       SiMain.LogVerbose('Processing repo: ' + APath);
       SetCurrentDir(APath);
+      FProgressForm.Max(0);
+      FProgressForm.StepText := 'Backup repository';
       copyFileAndDir(kGitDir,kBackupDir);
       LRootDir := createProjectDir(APath);
       // TRICK: we don't have ending slash, so we consider it as file
@@ -337,18 +339,25 @@ end;
 
 procedure TfmMain.mergeRepo(APath: string);
 begin
+  FProgressForm.Max(0);
+  FProgressForm.StepText := 'Merge repository';
   APath := ExcludeTrailingBackslash(APath);
   FGit.MergeRepo(APath);
+  FProgressForm.StepText := 'Cleanup';
   deleteFileAndDir(APath+'\'+kGitDir);
   MoveFile(PChar(APath+'\'+kBackupDir),PChar(APath+'\'+kGitDir));
 end;
 
-procedure TfmMain.progressProcess(AStep: TCRGitProgressStep; APosition: Integer);
+procedure TfmMain.progressProcess(AStep: TCRGitProgressStep; APosition:
+    Integer; AText: string = '');
 begin
   Application.ProcessMessages;
   if FProgressForm <> nil then
     case AStep of
-      kCount: FProgressForm.Max(APosition);
+      kCount: begin
+          FProgressForm.StepText := AText;
+          FProgressForm.Max(APosition);
+        end;
       kPosition: FProgressForm.Progress(APosition);
     end;
 end;

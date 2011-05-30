@@ -84,7 +84,7 @@ type
     kPosition
   );
 
-  TCRGitProgress = procedure(AStep: TCRGitProgressStep; APosition: Integer) of object;
+  TCRGitProgress = procedure(AStep: TCRGitProgressStep; APosition: Integer; AText: string = '') of object;
 
   TCRGitInterface = class
     private
@@ -98,7 +98,7 @@ type
     FCommitMapper: TStringList;
     FCurrentCommit: string;
 
-    procedure progressIndication(AStep: TCRGitProgressStep; APosition: Integer); inline;
+    procedure progressIndication(AStep: TCRGitProgressStep; APosition: Integer; AText:string = ''); inline;
     function executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean; overload; inline;
     function executeCommand(ACmd: string; AFile: string = ''; AOut: TPipeStream =
         nil; AIn: TPipeStream = nil): Boolean; overload;
@@ -270,10 +270,10 @@ begin
 end;
 
 procedure TCRGitInterface.progressIndication(AStep: TCRGitProgressStep;
-    APosition: Integer);
+    APosition: Integer; AText: string = '');
 begin
   if Assigned(FOnProgress) then
-    FOnProgress(AStep,APosition);
+    FOnProgress(AStep,APosition,AText);
 end;
 
 function TCRGitInterface.executeCommand(ACmd: string; AOut: TPipeStream; AIn: TPipeStream = nil): Boolean;
@@ -565,7 +565,7 @@ begin
   FAuxList.LoadFromFile(kTempName);
   FCommitList.Clear;
 
-  progressIndication(kCount,FAuxList.Count);
+  progressIndication(kCount,FAuxList.Count,'Create commit tree');
 
   for LCount := 0 to FAuxList.Count - 1 do begin
     LCommitHash := FAuxList.Strings[LCount];
@@ -690,7 +690,7 @@ begin
   Clear;
   // create main commit list
   createCommitList;
-  progressIndication(kCount,FCommitList.Count);
+  progressIndication(kCount,FCommitList.Count,'Rewite commit tree');
 
   LInPipe := nil;
   LOutPipe := TPipeStream.Create;
