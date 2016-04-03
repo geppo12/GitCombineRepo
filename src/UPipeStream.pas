@@ -125,7 +125,7 @@ begin
   Result := '';
   LRed := Read(LBuf,kBufSize);
   LBuf[LRed] := #0;
-  Result := LBuf;
+  SetString(Result,PAnsiChar(@LBuf[0]),LRed);
 end;
 
 function TPipeStream.Read(var Buffer; Count: Longint): Longint;

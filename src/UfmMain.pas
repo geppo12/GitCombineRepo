@@ -202,7 +202,7 @@ end;
 procedure TfmMain.copyFileAndDir(AFrom, ATo: string);
 begin
   if FileGetAttr(AFrom, false) and faDirectory <> 0 then begin
-    if not DirectoryExists(ATo) then begin
+    if not SysUtils.DirectoryExists(ATo) then begin
       SiMain.LogDebug('CreateDir: %s',[ATo]);
       CreateDir(ATo);
     end;

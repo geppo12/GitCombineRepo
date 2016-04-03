@@ -3,47 +3,63 @@ object fmAbout: TfmAbout
   Top = 0
   BorderStyle = bsDialog
   Caption = 'About'
-  ClientHeight = 135
-  ClientWidth = 260
+  ClientHeight = 177
+  ClientWidth = 340
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
+  Font.Height = -14
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
   OnCreate = FormCreate
-  PixelsPerInch = 96
-  TextHeight = 13
+  PixelsPerInch = 120
+  TextHeight = 17
   object lblAppName: TLabel
-    Left = 24
-    Top = 24
-    Width = 85
-    Height = 13
+    Left = 31
+    Top = 31
+    Width = 110
+    Height = 17
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     Caption = 'Git Combine Repo'
   end
   object Label1: TLabel
-    Left = 24
-    Top = 43
-    Width = 162
-    Height = 13
-    Caption = #169' 2011 Ing Giuseppe Monteleone'
+    Left = 31
+    Top = 56
+    Width = 243
+    Height = 17
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
+    Caption = #169' 2011-2016 Ing Giuseppe Monteleone'
   end
   object btnOK: TButton
-    Left = 179
-    Top = 102
-    Width = 75
-    Height = 25
+    Left = 234
+    Top = 133
+    Width = 98
+    Height = 33
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     Caption = 'OK'
     ModalResult = 1
     TabOrder = 0
   end
   object LinkLabel1: TLinkLabel
-    Left = 24
-    Top = 72
-    Width = 129
-    Height = 17
+    Left = 31
+    Top = 94
+    Width = 165
+    Height = 21
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
     Caption = 
       '<a href="mailto:info@ing-monteleone.com">info@ing-monteleone.com' +
       '</a>'

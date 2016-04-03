@@ -1,0 +1,4 @@
+﻿Connections = pipe()
+DefaultLevel = Debug
+Enabled = True
+Level = Debug
