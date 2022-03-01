@@ -36,7 +36,7 @@ object fmAbout: TfmAbout
     Margins.Top = 4
     Margins.Right = 4
     Margins.Bottom = 4
-    Caption = #169' 2011-2016 Ing Giuseppe Monteleone'
+    Caption = #169' 2011-2022 Ing Giuseppe Monteleone'
   end
   object btnOK: TButton
     Left = 234

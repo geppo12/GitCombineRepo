@@ -1,5 +1,5 @@
 {
-	 Copyright 2011 Giuseppe Monteleone
+	 Copyright 2011-2022 Giuseppe Monteleone
 
 	 This file is part of 'CombineRepo'
 
@@ -203,7 +203,7 @@ procedure TfmMain.copyFileAndDir(AFrom, ATo: string);
 begin
   if FileGetAttr(AFrom, false) and faDirectory <> 0 then begin
     if not SysUtils.DirectoryExists(ATo) then begin
-      SiMain.LogDebug('CreateDir: %s',[ATo]);
+      SiMain.LogDebug('CreateDir: %s\%s',[GetCurrentDir,ATo]);
       CreateDir(ATo);
     end;
     copyOrDeleteDir(AFrom,ATo,false);

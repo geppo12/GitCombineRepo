@@ -1,6 +1,7 @@
 program CombineRepo;
 
 uses
+  EMemLeaks,
   Forms,
   UFmMain in 'UFmMain.pas' {fmMain},
   UFileVersion in 'UFileVersion.pas',
@@ -18,3 +19,4 @@ begin
   Application.CreateForm(TfmMain, fmMain);
   Application.Run;
 end.
+

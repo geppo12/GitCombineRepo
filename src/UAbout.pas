@@ -1,5 +1,5 @@
 {
-	 Copyright 2011 Giuseppe Monteleone
+	 Copyright 2011-2022 Giuseppe Monteleone
 
 	 This file is part of 'CombineRepo'
 

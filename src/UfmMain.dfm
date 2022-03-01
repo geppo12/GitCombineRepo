@@ -11,7 +11,7 @@ object fmMain: TfmMain
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  Position = poDesktopCenter
+  Position = poScreenCenter
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
@@ -47,7 +47,7 @@ object fmMain: TfmMain
     Left = 10
     Top = 390
     Width = 201
-    Height = 21
+    Height = 25
     Margins.Left = 4
     Margins.Top = 4
     Margins.Right = 4
@@ -79,7 +79,7 @@ object fmMain: TfmMain
     Margins.Right = 4
     Margins.Bottom = 4
     Anchors = [akLeft, akTop, akRight, akBottom]
-    ItemHeight = 13
+    ItemHeight = 17
     TabOrder = 2
   end
   object btnAdd: TButton
@@ -134,7 +134,7 @@ object fmMain: TfmMain
     Margins.Right = 4
     Margins.Bottom = 4
     Anchors = [akLeft, akRight, akBottom]
-    ItemHeight = 13
+    ItemHeight = 17
     TabOrder = 6
   end
 end

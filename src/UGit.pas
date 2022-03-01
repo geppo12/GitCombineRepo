@@ -1,5 +1,5 @@
 {
-	 Copyright 2011 Giuseppe Monteleone
+	 Copyright 2011-22 Giuseppe Monteleone
 
 	 This file is part of 'CombineRepo'
 
@@ -104,7 +104,7 @@ type
         nil; AIn: TPipeStream = nil): Boolean; overload;
     procedure updateUserEnvVars(AId: string; var AReference: TCRGitCommitInfo;
         ANew: TCRGitCommitInfo);
-    procedure findGitPathFormInno;
+    procedure findGitPath;
     procedure setIndexFilename(AName: string);
     function mapCommit(ACommitStr: string): string;
     function createParentStr(ACommit: TCRGitCommit): string;
@@ -147,6 +147,12 @@ const
   // kMsgDir = '.git/rewrite-message';
   kFileConfig = '.git/config';
 
+  // new check method : loooking for Git official keys
+
+  kGitKey = 'Software\GitForWindows';
+  kGitInstallPath = 'InstallPath';
+
+  // compatibility for old version
   // we read install location of Git form uninstall keys of InnoSetup
   kInnoKey =  'Software\Microsoft\Windows\CurrentVersion\Uninstall\Git_is1';
   kInnoValue = 'InstallLocation';
@@ -420,21 +426,27 @@ begin
   end;
 end;
 
-procedure TCRGitInterface.findGitPathFormInno;
+procedure TCRGitInterface.findGitPath;
 var
   LRegistry: TRegistry;
   LKeyValue: string;
 begin
-  LRegistry := TRegistry.Create(KEY_READ);
+  LRegistry := TRegistry.Create(KEY_READ or KEY_WOW64_64KEY);
   LRegistry.RootKey := HKEY_LOCAL_MACHINE;
   try
-    if LRegistry.OpenKey(kInnoKey,false) then begin
+    if  LRegistry.OpenKey(kGitKey,false) then
+    begin
+      LKeyValue := LRegistry.ReadString(kGitInstallPath);
+      FCmdPath := LKeyValue + '\bin\';
+      SiMain.LogVerbose('GIT: read Cmdpath: <%s> (1)',[FCmdPath])
+    end
+    else if LRegistry.OpenKey(kInnoKey,false) then begin
       LKeyValue := LRegistry.ReadString(kInnoValue);
       if LKeyValue = '' then
         raise EGitError.Create('No git installed (1)');
 
       FCmdPath := LKeyValue + 'bin\';
-      SiMain.LogVerbose('GIT: read Cmdpath: <%s>',[FCmdPath])
+      SiMain.LogVerbose('GIT: read Cmdpath: <%s> (2)',[FCmdPath])
     end else begin
       SiMain.LogWarning('No inno key present');
       raise EGitError.Create('No git installed (2)');
@@ -581,7 +593,7 @@ end;
 constructor TCRGitInterface.Create;
 begin
   // find git path from uninstall key of InnoSetup
-  findGitPathFormInno;
+  findGitPath;
   FAuxList    := TStringList.Create;
   // unix domain so we forget #13 #10 (Aka CR LF)
   FAuxList.LineBreak := #10;
