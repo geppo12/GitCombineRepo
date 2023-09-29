@@ -88,6 +88,7 @@ type
 
   TCRGitInterface = class
     private
+    FOriginName: string;
     FOnProgress: TCRGitProgress;
     FIndexFilename: string;
     FCmdPath: string;
@@ -600,6 +601,8 @@ begin
   FRefList   := TStringList.Create;
   FCommitMapper := TStringList.Create;
   FCommitList := TObjectList<TCRGitCommit>.Create;
+  { per il momento l'origin é fissa }
+  FOriginName := 'or339805353830803802380';
 end;
 
 destructor TCRGitInterface.Destroy;
@@ -650,25 +653,25 @@ var
   LRef: string;
   LRefList: TStringDynArray;
 begin
-  executeCommand(Format('git.exe remote add origin %s',[ARepo]));
+  executeCommand(Format('git.exe remote add %s %s',[FOriginName, ARepo]));
   // we pull master branch
-  executeCommand('git.exe pull origin master');
+  executeCommand(Format('git.exe pull %s master',[FOriginName]));
 
   // we get other branches
-  executeCommand('git.exe fetch origin');
+  executeCommand(Format('git.exe fetch %s',[FOriginName]));
   // now we fetch also tags objects
-  executeCommand('git.exe fetch --tags origin');
+  executeCommand(Format('git.exe fetch --tags %s',[FOriginName]));
 
   // create local branch that track remotes one
   // we skip master that already exists
   for LRef in FRefList do begin
     LHead := refToHead(LRef);
     if (LHead <> '') and (LHead <> 'master') then
-      executeCommand(Format('git.exe branch %s origin/%s',[LHead,LHead]));
+      executeCommand(Format('git.exe branch %s %s/%s',[LHead,FOriginName,LHead]));
   end;
 
   // remove origin
-  executeCommand('git.exe remote rm origin');
+  executeCommand(Format('git.exe remote rm %s',[FOriginName]));
 end;
 
 procedure TCRGitInterface.InitMerge;
